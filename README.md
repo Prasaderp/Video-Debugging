@@ -43,8 +43,8 @@ This project provides a pipeline to translate the spoken language in a video to 
 
 1.  **Clone the repository:**
     ```bash
-    git clone <repository-url>
-    cd <repository-name>
+    git clone https://github.com/Prasaderp/Video-Debugging.git
+    cd Video-Debugging
     ```
 
 2.  **Create a Python virtual environment (recommended):**
