@@ -1,0 +1,15 @@
+pyrubberband
+librosa
+soundfile
+pydub
+openai-whisper
+openai
+moviepy
+TTS
+torch
+# Add any other specific versions if known or if issues arise
+# For example, if TTS requires a specific torch version, list it explicitly.
+# pandas was a point of conflict, so we'll use the one TTS installed.
+pandas==1.5.3
+# The notebook also installs rubberband-cli via apt-get, 
+# which needs to be handled separately (e.g., in a Dockerfile or setup script). 

@@ -1,76 +1,115 @@
-# Video Translation Tool: English to Hindi  
+# Video Language Translator & Dubber
 
-A robust Python-based utility for translating English video content into Hindi, featuring audio extraction, transcription, translation, text-to-speech synthesis, and seamless audio-video synchronization.  
+This project provides a pipeline to translate the spoken language in a video to a target language (e.g., English to Hindi) and then dub the video with a new audio track generated using Text-to-Speech (TTS) in the target language, attempting to synchronize it with the original speech timings.
 
-## Overview  
+## Features
 
-This project automates the process of converting English-language videos into Hindi by leveraging state-of-the-art libraries and APIs. It preserves timing accuracy and maintains high-quality audio output, making it suitable for professional dubbing and localization tasks.  
+- Extracts audio from an input video file.
+- Transcribes the original audio to text using OpenAI Whisper.
+- Adjusts transcription timings based on detected leading silence.
+- Translates the transcribed text to a specified target language using OpenAI GPT models.
+- Generates speech for the translated text using Coqui TTS, using a reference speaker's voice.
+- Adjusts the speed and duration of the generated TTS audio segments to match the original sentence timings.
+- Combines the adjusted TTS segments into a single synchronized audio track.
+- Replaces the original audio in the video with the new dubbed audio track.
 
-## Key Features  
+## Project Structure
 
-- **Audio Extraction**: Extracts audio from video using FFmpeg.  
-- **Transcription**: Generates timestamped English transcripts with Whisper.  
-- **Translation**: Converts English text to Hindi using OpenAI GPT-3.5, preserving sentence structure and punctuation.  
-- **TTS Synthesis**: Produces natural-sounding Hindi audio with the TTS library.  
-- **Synchronization**: Aligns translated audio with original video timings.  
-- **Video Integration**: Replaces original audio with translated Hindi audio using MoviePy.  
+```
+. 
+├── VLT_v4.ipynb             # Original Jupyter Notebook (for reference)
+├── main.py                  # Main script to run the full pipeline
+├── config.py                # Configuration for API keys, paths, models, etc.
+├── requirements.txt         # Python dependencies
+├── README.md                # This file
+├── src/                     # Source code modules
+│   ├── __init__.py          # Makes src a package (can be empty)
+│   ├── audio_processing.py  # Audio extraction, silence detection, speed adjustment, combining
+│   ├── transcription.py     # Whisper transcription and sentence segmentation
+│   ├── translation.py       # OpenAI translation and timing pairing
+│   ├── tts_generation.py    # Coqui TTS audio generation
+│   └── video_processing.py  # Replacing audio in video
+└── data/                    # Data directory (not committed to git by default)
+    ├── input_videos/        # Place your input video files here (e.g., self-introduction.mp4)
+    ├── reference_audio/     # Place your reference speaker audio WAV/M4A here (e.g., input_neeraj.m4a)
+    ├── output_videos/       # Dubbed videos will be saved here
+    └── temp_files/          # Intermediate files (extracted audio, TTS segments, etc.)
+        ├── extracted_audio/
+        ├── tts_audio_segments/
+        ├── adjusted_tts_segments/
+        └── synchronized_audio/
+```
 
-## Prerequisites  
+## Setup
 
-- Python 3.8+  
-- FFmpeg installed on your system  
-- GPU support (optional, for faster processing)  
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd <repository-name>
+    ```
 
-## Installation  
+2.  **Create a Python virtual environment (recommended):**
+    ```bash
+    python -m venv venv
+    # On Windows
+    venv\Scripts\activate
+    # On macOS/Linux
+    source venv/bin/activate
+    ```
 
-Install dependencies in a compatible environment (e.g., Google Colab):  
+3.  **Install FFmpeg:**
+    FFmpeg is required for audio extraction and some audio processing. Ensure it's installed and accessible in your system's PATH.
+    -   Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH.
+    -   macOS (using Homebrew): `brew install ffmpeg`
+    -   Linux (using apt): `sudo apt update && sudo apt install ffmpeg`
+
+4.  **Install `rubberband-cli` (for `pyrubberband` time-stretching):**
+    The notebook uses `apt-get install -y rubberband-cli`. 
+    -   Linux (using apt): `sudo apt install rubberband-cli`
+    -   macOS (using Homebrew): `brew install rubberband`
+    -   Windows: This might be trickier. You may need to find a precompiled binary or build from source. `pyrubberband` might work without it if it can find the library, but `rubberband-cli` provides the command-line tool it often wraps.
+
+5.  **Install Python dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+    If you encounter issues with PyTorch/CUDA, you might need to install a specific version from [pytorch.org](https://pytorch.org/) that matches your CUDA toolkit version if you intend to use GPU for TTS or Whisper.
+
+6.  **Configure API Keys and Paths:**
+    -   Open `config.py`.
+    -   Set your `OPENAI_API_KEY`.
+    -   Review other paths and model settings if needed. The default paths assume you place your input video in `data/input_videos/` and reference speaker audio in `data/reference_audio/`.
+
+7.  **Place Input Files:**
+    -   Put your input video (e.g., `self-introduction.mp4`) into the `data/input_videos/` directory.
+    -   Put your reference speaker audio file (e.g., `input_neeraj.m4a` or a WAV file) into the `data/reference_audio/` directory.
+    -   Update `DEFAULT_VIDEO_FILENAME` and `DEFAULT_REFERENCE_AUDIO_FILENAME` in `config.py` or pass them as arguments if you modify `main.py` to accept them.
+
+## Running the Pipeline
+
+Once setup is complete, you can run the main pipeline script:
 
 ```bash
-sudo apt-get install -y rubberband-cli  
-pip install pyrubberband librosa soundfile pydub openai-whisper openai moviepy  
-pip install TTS  
+python main.py
 ```
 
-**Note**: Replace `YOUR_API_KEY` in the script with your OpenAI API key.  
+This will process the video specified by `DEFAULT_VIDEO_FILENAME` in `config.py` (or as modified in `main.py`), using the reference speaker audio specified by `DEFAULT_REFERENCE_AUDIO_FILENAME`.
 
-## Usage  
+The final dubbed video will be saved in the `data/output_videos/` directory.
 
-1. **Prepare Input**: Place your English video file (e.g., `self-introduction.mp4`) in the working directory.  
-2. **Configure Paths**: Update `video_path` and `audio_path` variables in the script.  
-3. **Execute**: Run the script to process the video and generate a Hindi-dubbed output.  
-4. **Output**: Retrieve the translated video (e.g., `self-introduction_final.mp4`).  
+## Notes & Potential Issues
 
-## Sample Configuration  
+*   **Model Downloads:** The first time you run the script, Whisper and Coqui TTS models will be downloaded. This might take some time.
+*   **API Costs:** Using the OpenAI API for transcription (if Whisper API is chosen over local) and translation will incur costs.
+*   **TTS Quality:** The quality of the dubbed audio depends heavily on the TTS model and the quality/similarity of the reference speaker audio.
+*   **Synchronization:** The synchronization is based on sentence timings and speed adjustments. Perfect lip-sync is not guaranteed and is a very complex problem.
+*   **Error Handling:** The scripts include basic error handling, but complex failures in external libraries (FFmpeg, model loading) might require specific troubleshooting.
+*   **Resource Usage:** Transcription and TTS can be resource-intensive, especially on CPU. A GPU is recommended for better performance with Whisper and Coqui TTS.
+*   **`rubberband-cli` on Windows:** If `pyrubberband` cannot find the `rubberband` library or `rubberband-cli`, the `adjust_audio_clips_with_timings` function in `audio_processing.py` might fail. You might need to adapt it to use a different time-stretching method or ensure `rubberband` is correctly installed and accessible.
 
-```python
-video_path = "/content/self-introduction.mp4"  
-audio_path = "/content/self-introduction_audio.wav"  
-```
+## Customization
 
-## Workflow  
-
-1. Extracts audio from the video.  
-2. Transcribes audio into English with timing data.  
-3. Translates into Hindi while maintaining structure.  
-4. Generates Hindi audio via TTS.  
-5. Adjusts audio clips to match original durations.  
-6. Synchronizes and integrates translated audio into the video.  
-
-## Output Example  
-
-- **Input**: English self-introduction video (1 minute).  
-- **Output**: Hindi-dubbed video with synchronized audio.  
-
-## Limitations  
-
-- Requires a stable internet connection for API calls.  
-- Performance may vary based on hardware (GPU recommended).  
-- Designed for English-to-Hindi; additional languages require customization.  
-
-## Contributing  
-
-Contributions are welcome. To contribute:  
-
-1. Fork the repository.  
-2. Submit pull requests with improvements.  
-3. Report issues via the GitHub Issues tab.  
+-   **Target Language:** Change `TARGET_LANGUAGE_NAME` and `TARGET_LANGUAGE_CODE` in `config.py`.
+-   **Models:** Update model names for Whisper, OpenAI, and TTS in `config.py`.
+-   **Paths:** Modify directory paths in `config.py`.
+-   **Parameters:** Adjust TTS speed, silence detection thresholds, etc., in `config.py`.
