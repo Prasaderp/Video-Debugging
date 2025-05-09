@@ -17,7 +17,6 @@ This project provides a pipeline to translate the spoken language in a video to 
 
 ```
 . 
-├── VLT_v4.ipynb             # Original Jupyter Notebook (for reference)
 ├── main.py                  # Main script to run the full pipeline
 ├── config.py                # Configuration for API keys, paths, models, etc.
 ├── requirements.txt         # Python dependencies
